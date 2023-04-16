@@ -3,19 +3,19 @@ import datetime
 import psycopg2
 import time
 
-while True:
-    response = requests.get('http://api.nbp.pl/api/exchangerates/tables/a/')
 
-    conn = psycopg2.connect(host="195.150.230.208", port=5432, database="2022_ciochon_adrian",
+response = requests.get('http://api.nbp.pl/api/exchangerates/tables/a/')
+
+conn = psycopg2.connect(host="195.150.230.208", port=5432, database="2022_ciochon_adrian",
                             user="2022_ciochon_adrian", password="34275")
 
-    cur = conn.cursor()
+cur = conn.cursor()
 
-    cur.execute(
+cur.execute(
         "CREATE TABLE IF NOT EXISTS exchange.kurs (id_waluty SERIAL PRIMARY KEY, currency CHARACTER(50), code CHARACTER(5), mid CHARACTER(10));")
 
-    current = response.json()[0]['rates']
-    for i in current:
+current = response.json()[0]['rates']
+for i in current:
         sql = "INSERT INTO exchange.kurs (currency, code, mid) VALUES (%s, %s, %s)"
         val = (i['currency'], i['code'], i['mid'])
         cur.execute(sql, val)
@@ -24,9 +24,9 @@ while True:
 
     # print(cur.fetchall())
 
-    conn.commit()
+conn.commit()
 
-    conn.close()
+conn.close()
 
     #plik = open("test.txt", "a")  ##  w = plik do zapisu | a = dołączenie do pliku
     #plik.write(str(datetime.datetime.now()))
@@ -43,6 +43,6 @@ while True:
 
     #plik.close()
 
-    time.sleep(600)
+time.sleep(100)
 
 
