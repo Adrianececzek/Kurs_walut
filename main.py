@@ -1,15 +1,15 @@
-import requests
+import requests as req
 import datetime
 import psycopg2
 import time
-from flask import Flask, render_template
+from flask import Flask
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
     while True:
-        response = requests.get('http://api.nbp.pl/api/exchangerates/tables/a/')
+        response = req.get('http://api.nbp.pl/api/exchangerates/tables/a/')
 
         conn = psycopg2.connect(host="195.150.230.208", port=5432, database="2022_ciochon_adrian",
                                 user="2022_ciochon_adrian", password="34275")
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
 
 while True:
-    response = requests.get('http://api.nbp.pl/api/exchangerates/tables/a/')
+    response = req.get('http://api.nbp.pl/api/exchangerates/tables/a/')
 
     conn = psycopg2.connect(host="195.150.230.208", port=5432, database="2022_ciochon_adrian",
                             user="2022_ciochon_adrian", password="34275")
