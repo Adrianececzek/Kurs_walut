@@ -1,80 +1,67 @@
 import requests as req
-import datetime
 import psycopg2
-import time
-from flask import Flask
-
+from flask import Flask, jsonify
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    while True:
-        response = req.get('http://api.nbp.pl/api/exchangerates/tables/a/')
+# Połączenie z bazą danych PostgreSQL
+conn = psycopg2.connect(
+    host="195.150.230.208",
+    port=5432,
+    database="2022_ciochon_adrian",
+    user="2022_ciochon_adrian",
+    password="34275"
+)
 
-        conn = psycopg2.connect(host="195.150.230.208", port=5432, database="2022_ciochon_adrian",
-                                user="2022_ciochon_adrian", password="34275")
+cur = conn.cursor()
 
-        cur = conn.cursor()
+# Tworzenie tabeli w bazie danych
+#cur.execute(
+#    "CREATE TABLE IF NOT EXISTS exchange.kurs (id_waluty SERIAL PRIMARY KEY, currency CHARACTER(50), code CHARACTER(5), mid CHARACTER(10));")
 
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS exchange.kurs (id_waluty SERIAL PRIMARY KEY, currency CHARACTER(50), code CHARACTER(5), mid CHARACTER(10));")
 
-        current = response.json()[0]['rates']
-        for i in current:
-            sql = "INSERT INTO exchange.kurs (currency, code, mid) VALUES (%s, %s, %s)"
-            val = (i['currency'], i['code'], i['mid'])
-            cur.execute(sql, val)
+# Endpoint API NBP
+url = 'http://api.nbp.pl/api/exchangerates/tables/a/'
 
-        conn.commit()
+# Pobranie danych z API NBP
+response = req.get(url)
+data = response.json()[0]['rates']
 
-        conn.close()
+# Zapis danych do bazy danych PostgreSQL
+for item in data:
+    cur.execute("INSERT INTO exchange.kurs (currency, code, mid) VALUES (%s, %s, %s)",
+                (item['currency'], item['code'], item['mid']))
+conn.commit()
 
-        time.sleep(600)
-    return 'test applacation'
+
+
+
+#@app.route('/')
+#def index():
+#    # Pobranie danych z bazy danych PostgreSQL
+#    cur.execute("SELECT * FROM exchange.kurs ORDER BY id_waluty DESC LIMIT 33")
+#    rows = cur.fetchall()
+#    return render_template('index.html', rows=rows)
+
+@app.route('/currency')
+def currency():
+    rates = []
+    for currency in data:
+        rates.append({
+            "currency": currency['currency'],
+            'code': currency['code'],
+            'mid': currency['mid']
+        })
+    return jsonify({"Rates": rates})
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True)
 
-while True:
-    response = req.get('http://api.nbp.pl/api/exchangerates/tables/a/')
 
-    conn = psycopg2.connect(host="195.150.230.208", port=5432, database="2022_ciochon_adrian",
-                            user="2022_ciochon_adrian", password="34275")
 
-    cur = conn.cursor()
 
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS exchange.kurs (id_waluty SERIAL PRIMARY KEY, currency CHARACTER(50), code CHARACTER(5), mid CHARACTER(10));")
 
-    current = response.json()[0]['rates']
-    for i in current:
-        sql = "INSERT INTO exchange.kurs (currency, code, mid) VALUES (%s, %s, %s)"
-        val = (i['currency'], i['code'], i['mid'])
-        cur.execute(sql, val)
 
-    # cur.execute("Select * FROM dziekanat.adresy;", )
 
-    # print(cur.fetchall())
 
-    conn.commit()
-
-    conn.close()
-
-    #plik = open("test.txt", "a")  ##  w = plik do zapisu | a = dołączenie do pliku
-    #plik.write(str(datetime.datetime.now()))
-    #plik.write("\n")
-    #currency = response.json()[0]['rates']
-    #for i in currency:
-    #    print(i['currency'], '-', i['mid'], ' ', i['code'])
-    #    plik.write(i['currency'])
-    #    plik.write(" ")
-    #    plik.write(str(i['mid']))
-    #    plik.write(" ")
-    #    plik.write(i['code'])
-    #    plik.write("\n")
-
-    #plik.close()
-
-    time.sleep(600)
 
 
